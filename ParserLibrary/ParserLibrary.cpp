@@ -10,7 +10,7 @@ int wmain()
 
 	int retval = 0;
 
-	if (CParser::GetInstance()->GetValue((char*)"hello", &retval) == false)
+	if (CParser::GetInstance()->GetValue((char*)"hello_world", &retval) == false)
 	{
 		printf_s("실패\n");
 	}
