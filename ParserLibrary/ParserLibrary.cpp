@@ -3,33 +3,19 @@
 
 int wmain()
 {
-	if (CParser::GetInstance()->LoadFile("hello.txt") == true)
-	{
-		printf_s("good\n");
-	}
+
+	CParser::GetInstance()->LoadFile(L"hello.txt");
 
 	int retval = 0;
 
-	if (CParser::GetInstance()->GetValue((char*)"hello", &retval) == false)
+	
+	WCHAR str[MAX_PATH] = { 1, };
+
+	if (CParser::GetInstance()->GetNameSpaceString(L"HI", L"hello", str, MAX_PATH) == false)
 	{
-		printf_s("실패\n");
+		wprintf_s(L"failed\n");
 	}
-
-	printf_s("%d\n", retval);
-
-	if (CParser::GetInstance()->GetValue((char*)"set", &retval) == false)
-	{
-		printf_s("실패\n");
-	}
-
-	printf_s("%d\n", retval);
-
-
-	if (CParser::GetInstance()->GetValue((char*)"name", &retval) == false)
-	{
-		printf_s("실패\n");
-	}
-
-	printf_s("%d\n", retval);
+	
+	wprintf_s(L"%s\n", str);
 
 }

@@ -10,7 +10,7 @@ public:
 		return &parser;
 	}
 
-	bool LoadFile(const char* fileName)
+	bool LoadFile(const WCHAR* pFileName)
 	{
 		FILE* fp = nullptr;	
 
@@ -21,9 +21,16 @@ public:
 			clearParser();
 		}
 
+		char multiByteFileName[MAX_PATH] = { 0, };
+	
+		if (WideCharToMultiByte(CP_ACP, 0, pFileName, -1, multiByteFileName, MAX_PATH, NULL, NULL) == 0)
+		{
+			return false;
+		}
+
 		do
 		{
-			fopen_s(&fp, fileName, "r+t");
+			fopen_s(&fp, multiByteFileName, "r+t");
 			if (fp == nullptr)
 			{
 				return false;
@@ -66,28 +73,38 @@ public:
 		return false;
 	}
 
-	bool GetValue(char* pTag, int* pValue)
+
+
+	bool GetValue(const WCHAR* pTag, int* pValue)
 	{
+		mOffset = 0;
+
+		char multiByteTag[MAX_PATH] = { 0, };
+
+		if (WideCharToMultiByte(CP_ACP, 0, pTag, -1, multiByteTag, MAX_PATH, NULL, NULL) == 0)
+		{
+			return false;
+		}
+
 		int wordLength = 0;
 
-		char retval[MAX_PATH];
+		char retval[MAX_PATH] = { 0, };
 
 		for (;;)
-		{
-			
+		{		
 			if (getNextWord(retval, &wordLength) == false)
 			{
 				return false;
 			}
 
-			if (0 == strcmp(pTag, retval))
+			if (strcmp(multiByteTag, retval) == 0)
 			{
 				if (getNextWord(retval, &wordLength) == false)
 				{
 					return false;
 				}
 
-				if (0 == strcmp(retval, "="))
+				if (strcmp("=", retval) == 0)
 				{	
 					if (getNextWord(retval, &wordLength) == false)
 					{
@@ -105,6 +122,262 @@ public:
 			}
 		}
 	}
+
+
+
+	bool GetString(const WCHAR* pTag, WCHAR* pString, int stringLen)
+	{
+		ZeroMemory(pString, stringLen);
+
+		mOffset = 0;
+
+		char multiByteTag[MAX_PATH] = { 0, };
+
+		if (WideCharToMultiByte(CP_ACP, 0, pTag, -1, multiByteTag, MAX_PATH, NULL, NULL) == 0)
+		{
+			return false;
+		}
+
+		int wordLength = 0;
+
+		char retval[MAX_PATH] = { 0, };
+
+		for (;;)
+		{
+			if (getNextWord(retval, &wordLength) == false)
+			{
+				return false;
+			}
+
+			if (strcmp(multiByteTag, retval) == 0)
+			{
+				if (getNextWord(retval, &wordLength) == false)
+				{
+					return false;
+				}
+
+				if (strcmp("=", retval) == 0)
+				{
+					if (getNextWord(retval, &wordLength) == false)
+					{
+						return false;
+					}
+
+					if (MultiByteToWideChar(CP_ACP, 0, retval, wordLength, pString, stringLen) == 0)
+					{
+						return false;
+					}
+
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
+	}
+
+
+
+
+	bool GetNameSpaceValue(const WCHAR* pNamespace, const WCHAR* pTag, int* pValue)
+	{
+		mOffset = 0;
+
+		int wordLength = 0;
+
+		char multiByteNamespace[MAX_PATH] = { 0, };
+
+		char multiByteTag[MAX_PATH] = { 0, };
+
+		char retval[MAX_PATH] = { 0, };
+
+		multiByteNamespace[0] = ':';
+
+		
+		if (WideCharToMultiByte(CP_ACP, 0, pNamespace, -1, &multiByteNamespace[1], MAX_PATH - 1, NULL, NULL) == 0)
+		{
+			return false;
+		}
+
+		if (WideCharToMultiByte(CP_ACP, 0, pTag, -1, multiByteTag, MAX_PATH, NULL, NULL) == 0)
+		{
+			return false;
+		}
+
+
+		for (;;)
+		{
+			if (getNextWord(retval, &wordLength) == false)
+			{
+				return false;
+			}
+
+			if (strcmp(multiByteNamespace, retval) == 0)
+			{
+				if (getNextWord(retval, &wordLength) == false)
+				{
+					return false;
+				}
+
+				if (strcmp(retval, "{") != 0)
+				{
+					return false;
+				}
+
+				for (;;)
+				{	
+					if (getNextWord(retval, &wordLength) == false)
+					{
+						return false;
+					}
+					
+					if (strcmp(retval, "}") == 0)
+					{
+						return false;
+					}
+
+					if (strcmp(retval, multiByteTag) == 0)
+					{
+						if (getNextWord(retval, &wordLength) == false)
+						{
+							return false;
+						}
+
+						if (strcmp(retval, "}") == 0)
+						{
+							return false;
+						}
+
+						if (strcmp(retval,"=") == 0)
+						{
+							if (getNextWord(retval, &wordLength) == false)
+							{
+								return false;
+							}
+
+							if (strcmp(retval, "}") == 0)
+							{
+								return false;
+							}
+
+							*pValue = atoi(retval);
+
+							return true;
+						}
+						else
+						{
+							return false;
+						}
+					}						
+				}
+			}
+		}
+	}
+
+
+
+	bool GetNameSpaceString(const WCHAR* pNamespace, const WCHAR* pTag, WCHAR* pString, int stringLen)
+	{
+		ZeroMemory(pString, stringLen);
+
+		mOffset = 0;
+
+		int wordLength = 0;
+
+		char multiByteNamespace[MAX_PATH] = { 0, };
+
+		char multiByteTag[MAX_PATH] = { 0, };
+
+		char retval[MAX_PATH] = { 0, };
+
+		multiByteNamespace[0] = ':';
+
+		if (WideCharToMultiByte(CP_ACP, 0, pNamespace, -1, &multiByteNamespace[1], MAX_PATH - 1, NULL, NULL) == 0)
+		{
+			return false;
+		}
+
+		if (WideCharToMultiByte(CP_ACP, 0, pTag, -1, multiByteTag, MAX_PATH, NULL, NULL) == 0)
+		{
+			return false;
+		}
+
+
+		for (;;)
+		{
+			if (getNextWord(retval, &wordLength) == false)
+			{
+				return false;
+			}
+
+			if (strcmp(multiByteNamespace, retval) == 0)
+			{
+				if (getNextWord(retval, &wordLength) == false)
+				{
+					return false;
+				}
+
+				if (strcmp(retval, "{") != 0)
+				{
+					return false;
+				}
+
+				for (;;)
+				{
+					if (getNextWord(retval, &wordLength) == false)
+					{
+						return false;
+					}
+
+					if (strcmp(retval, "}") == 0)
+					{
+						return false;
+					}
+
+					if (strcmp(retval, multiByteTag) == 0)
+					{
+						if (getNextWord(retval, &wordLength) == false)
+						{
+							return false;
+						}
+
+						if (strcmp(retval, "}") == 0)
+						{
+							return false;
+						}
+
+						if (strcmp(retval, "=") == 0)
+						{
+							if (getNextWord(retval, &wordLength) == false)
+							{
+								return false;
+							}
+
+							if (strcmp(retval, "}") == 0)
+							{
+								return false;
+							}
+
+							if (MultiByteToWideChar(CP_ACP, 0, retval, wordLength, pString, stringLen) == 0)
+							{
+								return false;
+							}
+
+							return true;
+						}
+						else
+						{
+							return false;
+						}
+					}
+				}
+			}
+		}
+	}
+
+
 
 private:
 
@@ -134,7 +407,6 @@ private:
 			
 			for (;;)
 			{
-
 				if (mOffset >= mFileSize - 1)
 				{
 					break;
@@ -195,7 +467,7 @@ private:
 		{		
 			// 0x20 은 스페이스바
 			if (mpFileData[mOffset] == '.' || mpFileData[mOffset] == '"' || mpFileData[mOffset] == ',' || mpFileData[mOffset] == 0x20 || mpFileData[mOffset] == '\b'
-				|| mpFileData[mOffset] == '\t' || mpFileData[mOffset] == '\n' || mpFileData[mOffset] == '\r' || mOffset >= mFileSize - 1)
+				|| mpFileData[mOffset] == '\t' || mpFileData[mOffset] == '\n' || mpFileData[mOffset] == '\r')
 			{			
 
 				*pWordLength = wordLength;
@@ -210,9 +482,21 @@ private:
 			++mOffset;
 			
 			++wordLength;
+
+			if (mOffset >= mFileSize - 1)
+			{
+				*pWordLength = wordLength;
+
+				ZeroMemory(pRetval, MAX_PATH);
+
+				memcpy_s(pRetval, MAX_PATH, pFileData, wordLength);
+
+				return;
+			}
 		}
 	}
 
+	// 마지막까지 확인했는데 길이가 0이면은 단어 찾기 실패로 return false
 	bool getNextWord(char *pRetval,int* pWordLength)
 	{
 

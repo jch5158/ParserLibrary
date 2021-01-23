@@ -1,21 +1,8 @@
 
 
+:HI  // 주석입니다.
+{ hello = adsf
 
 
 
-
-
-
-
-
-// hello = 123
-
-hello = 12
-
-
-// set = 10 dfkjlasdhjf;lkasdhf;lkasdhf;laksdhf;klasdhf;laksdf;asdf
-
-
-set = 10
-
-name = 77 // name = 10
+}
