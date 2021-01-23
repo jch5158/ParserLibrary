@@ -42,13 +42,13 @@ public:
 				break;
 			}
 
-			mpFileData = (char*)malloc(mFileSize + (int)1);
+			mpFileData = (char*)malloc(mFileSize + (long long)1);
 			if (mpFileData == nullptr)
 			{	
 				break;
 			}
 
-			ZeroMemory(mpFileData, mFileSize + (int)1);
+			ZeroMemory(mpFileData, mFileSize + (long long)1);
 
 			if (fread_s(mpFileData, mFileSize, 1, mFileSize, fp) == 0)
 			{			
@@ -74,16 +74,25 @@ public:
 
 		for (;;)
 		{
-			getNextWord(retval, &wordLength);
 			
+			if (getNextWord(retval, &wordLength) == false)
+			{
+				return false;
+			}
 
 			if (0 == strcmp(pTag, retval))
 			{
-				getNextWord(retval, &wordLength);
+				if (getNextWord(retval, &wordLength) == false)
+				{
+					return false;
+				}
 
 				if (0 == strcmp(retval, "="))
 				{	
-					getNextWord(retval, &wordLength);
+					if (getNextWord(retval, &wordLength) == false)
+					{
+						return false;
+					}
 
 					*pValue = atoi(retval);
 
@@ -93,7 +102,6 @@ public:
 				{
 					return false;
 				}
-
 			}
 		}
 	}
@@ -102,7 +110,7 @@ private:
 
 	CParser()
 		: mFileSize(0)
-		, mOffsetCount(0)
+		, mOffset(0)
 		, mpFileData(nullptr)
 	{
 	}
@@ -111,24 +119,65 @@ private:
 	{
 	}
 
+	bool IsRemark(void)
+	{
+		// 주석을 위한 문자 "//" 2BYTE 필요
+		if (mOffset >= mFileSize - 1)
+		{
+			return false;
+		}
+
+		if (mpFileData[mOffset] == '/' && mpFileData[mOffset + 1] == '/')
+		{
+
+			mOffset += 2;
+			
+			for (;;)
+			{
+
+				if (mOffset >= mFileSize - 1)
+				{
+					break;
+				}
+				
+				// '\n' 을 만날 때 까지 무시한다.
+				if (mpFileData[mOffset] == '\n')
+				{
+					++mOffset;
+					
+					return true;
+				}
+				
+				++mOffset;
+			}
+		}	
+		
+		return false;
+	}
+
 	void skipNoneCommand(void)
 	{
 		for (;;)
 		{
-			if (mOffsetCount >= mFileSize - 1)
+			if (mOffset >= mFileSize - 1)
 			{
 				break;
 			}
 
-			if (*mpFileData == '.' || *mpFileData == '"' || *mpFileData == ',' || *mpFileData == 0x20 || *mpFileData == 0x08
-				|| *mpFileData == 0x09 || *mpFileData == 0x0a || *mpFileData == 0x0d)
+			// 0x20 은 스페이스바
+			if (mpFileData[mOffset] == '.' || mpFileData[mOffset] == '"' || mpFileData[mOffset] == ',' || mpFileData[mOffset] == 0x20 || mpFileData[mOffset] == '\b'
+				|| mpFileData[mOffset] == '\t' || mpFileData[mOffset] == '\n' || mpFileData[mOffset] == '\r')
 			{
 
-				++mOffsetCount;
-				++mpFileData;
+				++mOffset;
 			}
 			else
 			{
+				if (IsRemark() == true)
+				{
+					continue;
+				}
+
 				break;
 			}
 		}
@@ -140,62 +189,57 @@ private:
 	{
 		int wordLength = 0;
 
-		char* pFileData = mpFileData;
+		char* pFileData = &mpFileData[mOffset];
 
 		for (;;)
 		{		
-			if (*mpFileData == '.' || *mpFileData == '"' || *mpFileData == ',' || *mpFileData == 0x20 || *mpFileData == 0x08
-				|| *mpFileData == 0x09 || *mpFileData == 0x0a || *mpFileData == 0x0d)
+			// 0x20 은 스페이스바
+			if (mpFileData[mOffset] == '.' || mpFileData[mOffset] == '"' || mpFileData[mOffset] == ',' || mpFileData[mOffset] == 0x20 || mpFileData[mOffset] == '\b'
+				|| mpFileData[mOffset] == '\t' || mpFileData[mOffset] == '\n' || mpFileData[mOffset] == '\r' || mOffset >= mFileSize - 1)
 			{			
 
 				*pWordLength = wordLength;
 
 				ZeroMemory(pRetval, MAX_PATH);
 
-				memcpy_s(pRetval, wordLength, pFileData, wordLength);
+				memcpy_s(pRetval, MAX_PATH, pFileData, wordLength);
 
 				return;
 			}
 
-			++mOffsetCount;
-
-			++mpFileData;
-
+			++mOffset;
+			
 			++wordLength;
-
-			if (mOffsetCount >= mFileSize - 1)
-			{	
-				*pWordLength = wordLength;
-
-				ZeroMemory(pRetval, MAX_PATH);
-
-				memcpy_s(pRetval, wordLength, pFileData, wordLength);
-
-				return;
-			}
 		}
 	}
 
-	void getNextWord(char *pRetval,int* pWordLength)
+	bool getNextWord(char *pRetval,int* pWordLength)
 	{
+
+		// 단어의 시작지점까지 찾는다.
 		skipNoneCommand();
+		
+		getWordLength(pRetval, pWordLength);
 
-		getWordLength(pRetval,pWordLength);
-
-		return;
+		if (*pWordLength == 0 && mOffset >= mFileSize - 1)
+		{
+			return false;
+		}
+		
+		return true;;
 	}
 
 
 	void clearParser(void)
 	{
 		mFileSize = 0;
-		mOffsetCount = 0;
+		mOffset = 0;
 		mpFileData = nullptr;
 	}
 	
 	int mFileSize;
 
-	int mOffsetCount;
+	int mOffset;
 
 	char* mpFileData;
 };

@@ -1,10 +1,21 @@
-hello_world                 =            
-1    
-
-No        =          2
-
-Set        =       3
 
 
 
 
+
+
+
+
+
+
+// hello = 123
+
+hello = 12
+
+
+// set = 10 dfkjlasdhjf;lkasdhf;lkasdhf;laksdhf;klasdhf;laksdf;asdf
+
+
+set = 10
+
+name = 77 // name = 10

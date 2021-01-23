@@ -10,14 +10,14 @@ int wmain()
 
 	int retval = 0;
 
-	if (CParser::GetInstance()->GetValue((char*)"hello_world", &retval) == false)
+	if (CParser::GetInstance()->GetValue((char*)"hello", &retval) == false)
 	{
 		printf_s("실패\n");
 	}
 
 	printf_s("%d\n", retval);
 
-	if (CParser::GetInstance()->GetValue((char*)"No", &retval) == false)
+	if (CParser::GetInstance()->GetValue((char*)"set", &retval) == false)
 	{
 		printf_s("실패\n");
 	}
@@ -25,7 +25,7 @@ int wmain()
 	printf_s("%d\n", retval);
 
 
-	if (CParser::GetInstance()->GetValue((char*)"Set", &retval) == false)
+	if (CParser::GetInstance()->GetValue((char*)"name", &retval) == false)
 	{
 		printf_s("실패\n");
 	}
