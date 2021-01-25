@@ -1,13 +1,27 @@
 #pragma once
+
+#include "stdafx.h"
+#include <iostream>
+#include <Windows.h>
+#include "CParser.h"
+
 class CParser
 {
 public:
 
-	static CParser *GetInstance()
+	CParser()
+		: mFileSize(0)
+		, mOffset(0)
+		, mpFileData(nullptr)
 	{
-		static CParser parser;
+	}
 
-		return &parser;
+	~CParser()
+	{
+		if (mpFileData != nullptr)
+		{
+			free(mpFileData);
+		}
 	}
 
 	bool LoadFile(const WCHAR* pFileName)
@@ -37,8 +51,7 @@ public:
 			}
 
 			if (fseek(fp, 0, SEEK_END) != 0)
-			{
-			
+			{	
 				break;
 			}
 
@@ -181,7 +194,7 @@ public:
 
 
 
-	bool GetNameSpaceValue(const WCHAR* pNamespace, const WCHAR* pTag, int* pValue)
+	bool GetNamespaceValue(const WCHAR* pNamespace, const WCHAR* pTag, int* pValue)
 	{
 		mOffset = 0;
 
@@ -278,7 +291,7 @@ public:
 
 
 
-	bool GetNameSpaceString(const WCHAR* pNamespace, const WCHAR* pTag, WCHAR* pString, int stringLen)
+	bool GetNamespaceString(const WCHAR* pNamespace, const WCHAR* pTag, WCHAR* pString, int stringLen)
 	{
 		ZeroMemory(pString, stringLen);
 
@@ -381,17 +394,6 @@ public:
 
 private:
 
-	CParser()
-		: mFileSize(0)
-		, mOffset(0)
-		, mpFileData(nullptr)
-	{
-	}
-
-	~CParser()
-	{
-	}
-
 	bool IsRemark(void)
 	{
 		// 주석을 위한 문자 "//" 2BYTE 필요
@@ -437,7 +439,7 @@ private:
 			}
 
 			// 0x20 은 스페이스바
-			if (mpFileData[mOffset] == '.' || mpFileData[mOffset] == '"' || mpFileData[mOffset] == ',' || mpFileData[mOffset] == 0x20 || mpFileData[mOffset] == '\b'
+			if (mpFileData[mOffset] == '"' || mpFileData[mOffset] == ',' || mpFileData[mOffset] == 0x20 || mpFileData[mOffset] == '\b'
 				|| mpFileData[mOffset] == '\t' || mpFileData[mOffset] == '\n' || mpFileData[mOffset] == '\r')
 			{
 
@@ -466,7 +468,7 @@ private:
 		for (;;)
 		{		
 			// 0x20 은 스페이스바
-			if (mpFileData[mOffset] == '.' || mpFileData[mOffset] == '"' || mpFileData[mOffset] == ',' || mpFileData[mOffset] == 0x20 || mpFileData[mOffset] == '\b'
+			if (mpFileData[mOffset] == '"' || mpFileData[mOffset] == ',' || mpFileData[mOffset] == 0x20 || mpFileData[mOffset] == '\b'
 				|| mpFileData[mOffset] == '\t' || mpFileData[mOffset] == '\n' || mpFileData[mOffset] == '\r')
 			{			
 
