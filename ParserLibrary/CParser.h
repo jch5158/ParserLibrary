@@ -1,9 +1,7 @@
 #pragma once
 
-#include "stdafx.h"
 #include <iostream>
 #include <Windows.h>
-#include "CParser.h"
 
 class CParser
 {
@@ -125,6 +123,54 @@ public:
 					}
 
 					*pValue = atoi(retval);
+
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
+	}
+
+	bool GetValue(const WCHAR* pTag, long long* pValue)
+	{
+		mOffset = 0;
+
+		char multiByteTag[MAX_PATH] = { 0, };
+
+		if (WideCharToMultiByte(CP_ACP, 0, pTag, -1, multiByteTag, MAX_PATH, NULL, NULL) == 0)
+		{
+			return false;
+		}
+
+		int wordLength = 0;
+
+		char retval[MAX_PATH] = { 0, };
+
+		for (;;)
+		{
+			if (getNextWord(retval, &wordLength) == false)
+			{
+				return false;
+			}
+
+			if (strcmp(multiByteTag, retval) == 0)
+			{
+				if (getNextWord(retval, &wordLength) == false)
+				{
+					return false;
+				}
+
+				if (strcmp("=", retval) == 0)
+				{
+					if (getNextWord(retval, &wordLength) == false)
+					{
+						return false;
+					}
+
+					*pValue = atoll(retval);
 
 					return true;
 				}
